@@ -1,4 +1,4 @@
-import { Button, Modal } from "react-bootstrap";
+import { Button, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
 import React, { useState } from "react"
 import { connect } from "react-redux";
 import { logOut } from "../store/actions/auth";
@@ -17,8 +17,14 @@ function LogOutForm(props) {
 
   return (
     <>
-
-      <Button variant="primary" className="m-sm-2 my-1" onClick={handleShowLogOut}>Log out</Button>
+      <OverlayTrigger
+        placement="bottom"
+        delay={{ show: 150, hide: 200 }}
+        overlay={<Tooltip id="button-tooltip">Log out</Tooltip>}
+      >
+        <Button variant="primary" className="m-sm-2 my-1" onClick={handleShowLogOut}>Log out</Button>
+    </OverlayTrigger>
+      
 
       <Modal show={showLogOut} onHide={handleCloseLogOut}>
         <Modal.Header closeButton>

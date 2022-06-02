@@ -1,16 +1,24 @@
 import axios from "axios"
-import { LOGIN_START, LOGIN_SUCCES, LOGOUT, REGISTRATION_ERROR, REGISTRATION_START, } from "./actionTypes"
+import { AUTH_ERROR, AUTH_START, AUTH_SUCCES, CLEAR_ERRORS, LOGOUT } from "./actionTypes"
 import { getCookie, setCookie, deleteCookie } from "../../library/workWithCookies"
 
 
-export function logIn(data, autoLogin) {
+export function auth(data, autoLogIn, type) {
   return async dispatch => {
 
-    dispatch(logInStart())
-    
-    try {
+    dispatch(authStart())
 
-      const url = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyARgM-QIF_l7_v-GyPaCgA0dm-70Vpk57c'
+    try {
+      let url = ''
+
+      if(type === 'logIn') {
+        url = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyARgM-QIF_l7_v-GyPaCgA0dm-70Vpk57c'
+      }else if(type === 'registration') {
+        url = 'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyARgM-QIF_l7_v-GyPaCgA0dm-70Vpk57c'
+      } else {
+        throw new Error('invalid auth action')
+      }
+      
 
       const authData = {
         ...data,
@@ -18,76 +26,54 @@ export function logIn(data, autoLogin) {
       }
 
       const response = await axios.post(url, authData)
-      response.data.autoLogin = autoLogin
 
-      setCookie('loacalId', response.data.localId, {
-        
-      })
-      // setCookie('email', response.data.email)
-      // setCookie('idToken', response.data.idToken)
+      if (autoLogIn) {
+        setCookie('email', response.data.email, {expires: new Date(Date.now() + 31536e6)})
+        setCookie('idToken', response.data.idToken, {expires: new Date(Date.now() + 31536e6)})
+        setCookie('localId', response.data.localId, {expires: new Date(Date.now() + 31536e6)})
+      }
 
-      dispatch(logInSucces(response.data))
+      dispatch(authSucces(response.data))
 
     } catch (error) {
       dispatch(authError(error))
     }
-    
+
   }
 
 }
 
-export function logInStart() {
+export function authSucces(data) {
   return {
-    type: LOGIN_START
-  }
-}
-
-export function logInSucces(data) {
-  return {
-    type: LOGIN_SUCCES,
+    type: AUTH_SUCCES,
     data
   }
 }
 
-export function register(data, autoLogin) {
-  return async dispatch => {
-    dispatch(registrationStart())
-
-    try {
-
-      const url = 'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyARgM-QIF_l7_v-GyPaCgA0dm-70Vpk57c'
-
-      const authData = {
-        ...data,
-        returnSecureToken: true
-      }
-
-      const response = await axios.post(url, authData)
-
-      response.data.autoLogin = autoLogin
-      dispatch(logInSucces(response.data))
-    } catch (error) {
-      dispatch(authError(error))
-    }
-  }
-
-}
-
-export function registrationStart() {
+export function authStart() {
   return {
-    type: REGISTRATION_START
+    type: AUTH_START
   }
 }
 
 export function authError(error) {
   return {
-    type: REGISTRATION_ERROR,
+    type: AUTH_ERROR,
     error
   }
 }
 
 export function logOut() {
+  deleteCookie('email')
+  deleteCookie('idToken')
+  deleteCookie('localId')
   return {
     type: LOGOUT
+  }
+}
+
+export function clearErrors () {
+  return {
+    type: CLEAR_ERRORS
   }
 }

@@ -1,6 +1,8 @@
-import { LOGIN_ERROR, LOGIN_START, LOGIN_SUCCES, LOGOUT, REGISTRATION_ERROR, REGISTRATION_START, REGISTRATION_SUCCES } from "../actions/actionTypes";
+import { AUTH_ERROR, AUTH_START, AUTH_SUCCES, CLEAR_ERRORS, LOGOUT } from "../actions/actionTypes";
 
 const initialState = {
+  email: null,
+  idToken: null,
   isLogIn: false,
   loading: false,
   error: null,
@@ -8,39 +10,38 @@ const initialState = {
 
 export default function authReducer(state = initialState, action) {
   switch (action.type) {
-    case REGISTRATION_START:
+    case AUTH_START:
       return {
         ...state, loading: true
       }
 
-    case REGISTRATION_SUCCES:
+    case AUTH_SUCCES:
       return {
-        ...state, ...action.data, loading: false, isLogIn: true, error: null
+        email: action.data.email,
+        idToken: action.data.idToken,
+        localId: action.data.localId,
+        loading: false,
+        isLogIn: true,
+        error: null
       }
 
-    case REGISTRATION_ERROR:
+    case AUTH_ERROR:
       return {
         ...state, loading: false, error: action.error
       }
-    case LOGIN_START:
-      return {
-        ...state, loading: true
-      }
 
-    case LOGIN_SUCCES:
-      return {
-        ...state, ...action.data, loading: false, isLogIn: true
-      }
-
-    case LOGIN_ERROR:
-      return {
-        ...state, loading: false, error: action.error
-      }
     case LOGOUT:
       return {
+        email: null,
+        idToken: null,
         isLogIn: false,
         loading: false,
         error: null,
+      }
+      case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null
       }
 
     default:

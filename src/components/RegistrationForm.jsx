@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { Button, Container, Modal, Form, Row, Col } from "react-bootstrap";
+import { Button, Container, Modal, Form, Row, Col, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { connect } from "react-redux";
-import { register } from "../store/actions/auth";
+import { auth, clearErrors } from "../store/actions/auth";
 
 
 function RegistrationForm(props) {
@@ -17,7 +17,7 @@ function RegistrationForm(props) {
 
 
   const handleForm = async (data, event) => {
-    await props.register(data, event.target.elements.checkbox.checked)
+    await props.auth(data, event.target.elements.checkbox.checked, 'registration')
     reset()
   }
 
@@ -25,31 +25,55 @@ function RegistrationForm(props) {
     console.log(data, event, 'Validation Error');
   }
 
-  let registerErrors = {
+  let registrationErrors = {
     email: {},
-    password: {}
+    password: {},
+    another: {}
+  }
+
+  function clearRegistrationErrors() {
+    props.clearErrors()
+    registrationErrors = {
+      email: {},
+      password: {},
+      another: {}
+    }
   }
 
   if (props.error) {
-    let res = props.error.response.data.error.message.split('').map((el, index) => {
-      if (index === 0) return el
-      if (el === "_") return " "
-      return el.toLowerCase()
-    }).join('')
+    try {
+      let res = props.error.response.data.error.message.split('').map((el, index) => {
+        if (index === 0) return el
+        if (el === "_") return " "
+        return el.toLowerCase()
+      }).join('')
 
-    registerErrors.email.message = res
-    registerErrors.email.error = props.error
+      if (res.match(/email/i)) {
+        registrationErrors.email.message = res
+        registrationErrors.email.error = props.error
+      } else if (res.match(/password/i)) {
+        registrationErrors.password.message = res
+        registrationErrors.password.error = props.error
+      } else {
+        registrationErrors.another.message = res
+        registrationErrors.another.error = props.error
+      }
+    } catch (error) {
+      console.log(error)
+    }
   }
 
-  // if (props.state.isLogIn) { console.log(props.state) }
-
-  // console.log(props.state.isLogIn);
   return (
     <>
-      <Button variant="primary" className="m-sm-2 my-1" onClick={handleShowRegistration}>Register</Button>
+      <OverlayTrigger
+        placement="bottom"
+        delay={{ show: 150, hide: 200 }}
+        overlay={<Tooltip id="button-tooltip">Register</Tooltip>}
+      >
+        <Button variant="primary" className="m-sm-2 my-1" onClick={handleShowRegistration}>Register</Button>
+      </OverlayTrigger>
 
       <Modal show={showRegistration} onHide={handleCloseRegistration}>
-
 
         <Modal.Header closeButton>
           <Modal.Title>Registration</Modal.Title>
@@ -61,6 +85,7 @@ function RegistrationForm(props) {
               <Form.Group as={Col} xs="12" controlId="email" className="" style={{ minHeight: '110px' }} >
                 <Form.Label>Enter your email</Form.Label>
                 <Form.Control
+                  onInput={clearRegistrationErrors}
                   required
                   type="email"
                   placeholder="Email"
@@ -72,8 +97,11 @@ function RegistrationForm(props) {
                     }
                   })}
                 />
-                {errors.email ? <div style={{ color: 'red', fontSize: "0.75rem" }} className="error mt-1">{errors.email.message}</div> : null}
-                {/* {Object.keys(registerErrors.email).length ? <div style={{ color: 'red', fontSize: "0.75rem" }} className="error mt-1">{registerErrors.email.message}</div> : null} */}
+                {errors.email ?
+                  <div style={{ color: 'red', fontSize: "0.75rem" }} className="error mt-1">{errors.email.message}</div>
+                  : registrationErrors.email ?
+                    <div style={{ color: 'red', fontSize: "0.75rem" }} className="error mt-1">{registrationErrors.email.message}</div>
+                    : null}
               </Form.Group>
 
             </Row>
@@ -82,6 +110,7 @@ function RegistrationForm(props) {
               <Form.Group as={Col} xs="12" controlId="password" className="" style={{ minHeight: '110px' }}>
                 <Form.Label>Enter your password</Form.Label>
                 <Form.Control
+                  onInput={clearRegistrationErrors}
                   required
                   type="password"
                   placeholder="Password"
@@ -99,7 +128,11 @@ function RegistrationForm(props) {
                   })}
                 />
 
-                {errors.password ? <div style={{ color: 'red', fontSize: "0.75rem" }} className="error mt-1">{errors.password.message}</div> : null}
+                {errors.password ?
+                  <div style={{ color: 'red', fontSize: "0.75rem" }} className="error mt-1">{errors.password.message}</div>
+                  : registrationErrors.password ?
+                    <div style={{ color: 'red', fontSize: "0.75rem" }} className="error mt-1">{registrationErrors.password.message}</div>
+                    : null}
               </Form.Group>
             </Row>
             <Form.Group className="mb-3">
@@ -130,7 +163,8 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    register: (data, autoLogin) => dispatch(register(data, autoLogin))
+    auth: (data, autoLogin, type) => dispatch(auth(data, autoLogin, type)),
+    clearErrors: () => dispatch(clearErrors())
   }
 }
 
