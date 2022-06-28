@@ -5,11 +5,11 @@ import NaviBar from "../components/NaviBar"
 
 const Layout = () => {
   return (
-    <>
+    <div className="me-3">
       <NaviBar />
       <Outlet />
       <Footer />
-    </>
+    </div>
   )
 }
 
